@@ -10,4 +10,7 @@ export default defineConfig({
       '/api/login': 'http://localhost:5000',
     },
   },
+  build: {
+    outDir: './build',
+  },
 });

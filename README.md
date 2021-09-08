@@ -46,3 +46,6 @@ If a yarn.lock file is found at the root of your application along with package.
     "yarn": "1.x"
   }
 }
+
+
+    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false yarn --cwd frontend install && yarn --cwd frontend build"

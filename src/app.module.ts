@@ -38,7 +38,7 @@ import { join } from 'path';
       },
     }),
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'frontend', 'dist'),
+      rootPath: join(__dirname, '..', 'frontend', 'build'),
       exclude: ['/api*'],
     }),
     UsersModule,
