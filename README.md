@@ -6,10 +6,20 @@
 [circleci-url]: https://circleci.com/gh/nestjs/nest
 
 Heroku Deployment
-NestJS Server
+
+Creating a Heroku remote
+```powershell
+git branch -M main
+heroku create -a dev-sr-chat-backend
+git remote -v
+heroku features:enable http-session-affinity // Enable Websocket
+git push heroku main
+# git subtree push --prefix server heroku master
+```
+For an existing Heroku app
 
 ```powershell
-heroku create -a dev-sr-chat-backend
+git branch -M main
 heroku git:remote -a dev-sr-chat-backend
 heroku features:enable http-session-affinity // Enable Websocket
 git push heroku main
