@@ -44,8 +44,16 @@ export class SocketGateway
   }
   async handleConnection(socket: Socket, ...args: any[]) {
     try {
+      /*
+
+      *Cookie: "accessToken=val; heroku-session-affinity=val; another=val...."
+
+      All the cookies will come as in a string format Unlike in REST API where the
+      cookies are parsed by CookieParser Middleware as an object
+      */
+
+      //
       const tokens: string[] = socket.handshake.headers.cookie.split('; ');
-      //accessToken=val; another=""
       let accessTokenFound = false;
       tokens.forEach(async (t) => {
         const [key, token] = t.split('=');

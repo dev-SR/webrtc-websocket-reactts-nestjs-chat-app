@@ -30,8 +30,16 @@ const SocketProvider: React.FC<ProviderProps> = ({ children }) => {
   // if (dev) url = 'http://localhost:5000';
 
   useEffect(() => {
-    const s = io({ withCredentials: true });
-    setSocket(s);
+    let s: Socket;
+    if (!dev) {
+      s = io({ withCredentials: true });
+      setSocket(s);
+    } else {
+      s = io('http://localhost:5000', { withCredentials: true });
+      setSocket(s);
+    }
+
+    console.log(`dev: ${dev}`);
 
     return () => {
       s.close();
