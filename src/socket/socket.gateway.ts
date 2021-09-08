@@ -1,0 +1,119 @@
+import {
+  SubscribeMessage,
+  WebSocketGateway,
+  OnGatewayInit,
+  WebSocketServer,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  WsException,
+} from '@nestjs/websockets';
+import {
+  BadGatewayException,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { Socket, Server } from 'socket.io';
+import { AuthService } from 'src/auth/auth.service';
+import { UsersService } from 'src/users/users.service';
+import { ChatService } from 'src/chat/chat.service';
+import { ConnectedUserService } from 'src/chat/connected-service.service';
+const options = {
+  cors: {
+    origin: [
+      'http://localhost:3000',
+      'https://vigorous-kilby-91cb1f.netlify.app',
+    ],
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+};
+@WebSocketGateway(options)
+export class SocketGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
+  @WebSocketServer() server: Server;
+  constructor(
+    private authService: AuthService,
+    private userService: UsersService,
+    private chatService: ChatService,
+    private connectedUserService: ConnectedUserService,
+  ) {}
+  private logger: Logger = new Logger('AppGateway');
+  afterInit() {
+    this.logger.log('Init');
+  }
+  async handleConnection(socket: Socket, ...args: any[]) {
+    try {
+      const token: string = socket.handshake.headers.cookie.split('=')[1];
+      const decodedToken = await this.authService.verifyToken(token);
+
+      this.logger.log(
+        `socket connected: ${socket.id} token: ${token.slice(0, 20)}...`,
+      );
+
+      if (!decodedToken) {
+        return this.disconnect(socket);
+      } else {
+        await this.connectedUserService.setOnline({
+          socketId: socket.id,
+          userId: decodedToken.id,
+        });
+      }
+    } catch {
+      return this.disconnect(socket);
+    }
+  }
+  private disconnect(socket: Socket) {
+    socket.emit('Error', new UnauthorizedException());
+    socket.disconnect();
+  }
+  async handleDisconnect(socket: Socket) {
+    this.logger.log(`socket disconnected: ${socket.id}`);
+    await this.connectedUserService.setOffline(socket.id);
+    socket.disconnect();
+  }
+
+  @SubscribeMessage('get-all-conversations')
+  async getAllConversation(socket: Socket, payload) {
+    const d = await this.chatService.getAllConversation(
+      payload.userID,
+      payload.page,
+    );
+    // setInterval(() => {
+    //   socket.emit('get-all-conversations', d);
+    // }, 10000);
+  }
+
+  @SubscribeMessage('get-all-conversations-immediate')
+  async getAllConversationImmediate(socket: Socket, payload) {
+    const d = await this.chatService.getAllConversation(
+      payload.userID,
+      payload.page,
+    );
+    socket.emit('get-all-conversations-immediate', d);
+  }
+
+  @SubscribeMessage('send-message')
+  async handleSendMessage(socket: Socket, payload) {
+    // this.logger.log(payload);
+    const d = await this.chatService.addNewMassageBetweenTwoUsers(payload);
+    socket.emit('send-message', d);
+  }
+
+  @SubscribeMessage('notify-all-on-new-message')
+  async handleOnNewMessage(socket: Socket, payload: { user_list: string[] }) {
+    payload.user_list.map(async (u_id) => {
+      const tobe_send = await this.connectedUserService.getSocketOfOnlineUser(
+        u_id,
+      );
+      // user is active, other wise no need to notify them
+      if (tobe_send?.user?.id) {
+        const d = await this.chatService.getAllConversation(
+          tobe_send.user.id,
+          1,
+        );
+        this.server.to(tobe_send.socketId).emit('notify-all-on-new-message', d);
+      }
+    });
+  }
+}
