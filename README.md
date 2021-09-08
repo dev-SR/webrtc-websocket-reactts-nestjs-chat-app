@@ -15,6 +15,7 @@ git remote -v
 heroku features:enable http-session-affinity // Enable Websocket
 git push heroku main
 # git subtree push --prefix server heroku master
+ heroku logs --tail
 ```
 For an existing Heroku app
 

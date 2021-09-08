@@ -45,6 +45,8 @@ export class SocketGateway
   async handleConnection(socket: Socket, ...args: any[]) {
     try {
       const token: string = socket.handshake.headers.cookie.split('=')[1];
+      this.logger.log(`token: ${token}`);
+
       const decodedToken = await this.authService.verifyToken(token);
 
       this.logger.log(
