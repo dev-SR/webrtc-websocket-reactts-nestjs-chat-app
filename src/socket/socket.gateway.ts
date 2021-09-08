@@ -44,22 +44,32 @@ export class SocketGateway
   }
   async handleConnection(socket: Socket, ...args: any[]) {
     try {
-      const token: string = socket.handshake.headers.cookie.split('=')[1];
-      this.logger.log(`token: ${token}`);
+      const tokens: string[] = socket.handshake.headers.cookie.split('; ');
+      //accessToken=val; another=""
+      let accessTokenFound = false;
+      tokens.forEach(async (t) => {
+        const [key, token] = t.split('=');
+        if (key == 'accessToken') {
+          accessTokenFound = true;
+          const decodedToken = await this.authService.verifyToken(token);
 
-      const decodedToken = await this.authService.verifyToken(token);
+          this.logger.log(
+            `socket connected: ${socket.id} token: ${token.slice(0, 20)}...`,
+          );
 
-      this.logger.log(
-        `socket connected: ${socket.id} token: ${token.slice(0, 20)}...`,
-      );
+          if (!decodedToken) {
+            return this.disconnect(socket);
+          } else {
+            await this.connectedUserService.setOnline({
+              socketId: socket.id,
+              userId: decodedToken.id,
+            });
+          }
+        }
+      });
 
-      if (!decodedToken) {
-        return this.disconnect(socket);
-      } else {
-        await this.connectedUserService.setOnline({
-          socketId: socket.id,
-          userId: decodedToken.id,
-        });
+      if (!accessTokenFound) {
+        this.disconnect(socket);
       }
     } catch {
       return this.disconnect(socket);
