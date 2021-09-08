@@ -30,9 +30,7 @@ const SocketProvider: React.FC<ProviderProps> = ({ children }) => {
   // if (dev) url = 'http://localhost:5000';
 
   useEffect(() => {
-    const s = io('https://dev-sr-chat-backend.herokuapp.com', {
-      withCredentials: true,
-    });
+    const s = io({ withCredentials: true });
     setSocket(s);
 
     return () => {
