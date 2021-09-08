@@ -14,7 +14,7 @@ async function bootstrap() {
   //https://github.com/expressjs/cors#configuration-options
   app.enableCors({
     origin: [
-      'https://vigorous-kilby-91cb1f.netlify.app',
+      'https://dev-sr-chat-backend.herokuapp.com',
       'http://localhost:3000',
     ],
     methods: 'GET,PUT,POST,DELETE',

@@ -20,8 +20,8 @@ import { ConnectedUserService } from 'src/chat/connected-service.service';
 const options = {
   cors: {
     origin: [
+      'https://dev-sr-chat-backend.herokuapp.com',
       'http://localhost:3000',
-      'https://vigorous-kilby-91cb1f.netlify.app',
     ],
     methods: ['GET', 'POST'],
     credentials: true,
