@@ -25,12 +25,12 @@ const SocketProvider: React.FC<ProviderProps> = ({ children }) => {
   );
 
   const dev = import.meta.env.VITE_SOCKET_IO_URL;
-  let url = 'https://dev-sr-chat-backend.herokuapp.com';
+  // let url = 'https://dev-sr-chat-backend.herokuapp.com';
 
-  if (dev) url = 'http://localhost:5000';
+  // if (dev) url = 'http://localhost:5000';
 
   useEffect(() => {
-    const s = io(url, {
+    const s = io('https://dev-sr-chat-backend.herokuapp.com', {
       withCredentials: true,
     });
     setSocket(s);
