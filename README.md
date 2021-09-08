@@ -5,7 +5,7 @@
 [circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
 [circleci-url]: https://circleci.com/gh/nestjs/nest
 
-Heroku Deployment
+## Heroku Deployment
 
 Creating a Heroku remote
 ```powershell
@@ -34,10 +34,12 @@ yarn add socket.io @types/socket.io
 ```
 
 
-## Specifying a Yarn Version
+### Specifying a Yarn Version (OP)
 
-If a yarn.lock file is found at the root of your application along with package.json, Heroku will download and install Yarn and use it to install your dependencies. However, you should specify which version you are using locally so that same version can be used on Heroku.
+If a `yarn.lock` file is found at the root of your application along with package.json, H**eroku will download and install Yarn and use it to install your dependencies**. However, you should specify which version you are using locally so that same version can be used on Heroku.
 
+
+```bash
 {
   "name": "myapp",
   "description": "a really cool app",
@@ -46,6 +48,26 @@ If a yarn.lock file is found at the root of your application along with package.
     "yarn": "1.x"
   }
 }
+```
+
+### Skip pruning (IMPORTANT)🚀🚀🚀
+
+If you need access to packages declared under `devDependencies` in a different buildpack or at runtime, then you can set `NPM_CONFIG_PRODUCTION=false or YARN_PRODUCTION=false`to skip the pruning step.
+
+```bash
+heroku config:set NPM_CONFIG_PRODUCTION=false YARN_PRODUCTION=false
+```
+or
+
+```json
+"scripts": {
+    "prebuild": "rimraf dist",
+    "build": "nest build && yarn client:build",
+    "start:dev": "nest start --watch",
+    "start:prod": "node dist/main",
+    "client": "yarn --cwd frontend dev",
+    "client:build": "NPM_CONFIG_PRODUCTION=false YARN_PRODUCTION=false yarn --cwd frontend install && yarn --cwd frontend build"
+  },
+```
 
 
-    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false yarn --cwd frontend install && yarn --cwd frontend build"
