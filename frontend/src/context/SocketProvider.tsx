@@ -25,21 +25,15 @@ const SocketProvider: React.FC<ProviderProps> = ({ children }) => {
   );
 
   const dev = import.meta.env.VITE_SOCKET_IO_URL;
-  // let url = 'https://dev-sr-chat-backend.herokuapp.com';
+  const env = import.meta.env.VITE_NODE_ENV;
 
-  // if (dev) url = 'http://localhost:5000';
+  //CHANGE io options
+  // if (dev) io('http://localhost:5000', { withCredentials: true }); //DIFF. DOMAINS
+  // if (prod) io({ withCredentials: true }); //SAME DOMAIN
 
   useEffect(() => {
-    let s: Socket;
-    if (!dev) {
-      s = io({ withCredentials: true });
-      setSocket(s);
-    } else {
-      s = io('http://localhost:5000', { withCredentials: true });
-      setSocket(s);
-    }
-
-    console.log(`dev: ${dev}`);
+    let s: Socket = io({ withCredentials: true });
+    setSocket(s);
 
     return () => {
       s.close();
