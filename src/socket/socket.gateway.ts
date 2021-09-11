@@ -139,4 +139,10 @@ export class SocketGateway
     const flag = await this.chatService.createNewConversation(payload);
     socket.emit('conversation-exits', { exits: flag });
   }
+
+  @SubscribeMessage('sdp-process')
+  async processSDP(socket: Socket, payload: any) {
+    console.log(payload);
+    socket.broadcast.emit('sdp-process', payload);
+  }
 }

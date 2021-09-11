@@ -1,28 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useChat } from '../../context/ChatProvider';
 import { AiOutlineUserAdd } from 'react-icons/ai';
-import NewWindow from 'react-new-window';
 import { useSocket } from '../../context/SocketProvider';
 import { Modal } from '../modal';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import toast, { Toaster } from 'react-hot-toast';
 import { useAuth } from '../../context/AuthProvider';
-
-interface NewWindowProps {
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-}
-const Demo: React.FC<NewWindowProps> = ({ setOpen }) => {
-  const { socket } = useSocket();
-  const sendMsg = () => {
-    socket?.emit('send-message', 'HI');
-  };
-
-  return (
-    <NewWindow copyStyles={true} onUnload={() => setOpen(false)}>
-      <h1 onClick={sendMsg}>Hi 👋</h1>
-    </NewWindow>
-  );
-};
+// import { Dropdown, DropdownItem, DropdownMenu, DropdownToggle } from '../dropdown';
 
 interface ModalProps {
   isOpen: boolean;
@@ -120,23 +104,30 @@ const ConversationsList: React.FC = () => {
         {conversations && (
           <div className="mt-10 flex flex-col">
             {conversations.map((con, i) => (
-              <div key={i} className="" onClick={() => selectConversation(i)}>
+              <div
+                key={i}
+                className=""
+                onClick={() => {
+                  selectConversation(i);
+                }}>
                 {con.participants &&
                   con.participants.map((p, j) => {
                     const avatar = p.user.name.slice(0, 1).toUpperCase();
                     const conversationsWith = p.user.name;
                     let lastMessage = null;
                     if (con.messages && con.messages.length >= 1) {
-                      lastMessage = con.messages[0].content.slice(0, 20);
+                      const last = con.messages.length;
+                      lastMessage = con.messages[last - 1].content.slice(0, 10);
                     }
                     return (
                       <div
                         key={p.id}
-                        className={`flex md:items-center space-x-4 md:px-4 md:py dark:hover:bg-gray-darkest cursor-pointer items-center md:justify-start border-l-8 border-gray-dark ${
+                        className={`flex md:items-center space-x-4 md:px-4 md:py dark:hover:bg-gray-darkest cursor-pointer items-center border-l-8 border-gray-dark ${
                           selectedConversation === i
                             ? 'border-l-8 border-gray-darkest dark:bg-gray'
                             : ''
                         }`}>
+                        <div></div>
                         <div
                           className={`flex justify-center items-center rounded-full w-12 h-12 dark:bg-gray-dark dark:text-gray-light relative flex-shrink-0`}>
                           {avatar}
@@ -150,13 +141,25 @@ const ConversationsList: React.FC = () => {
                             </div>
                           )}
                         </div>
-                        <div className="hidden md:flex flex-col space-y-1 ">
-                          <div className="mt-2 dark:text-gray-lightest ">
-                            {conversationsWith}
+                        <div className="flex justify-between items-center w-full">
+                          <div className="hidden md:flex flex-col space-y-1 ">
+                            <div className="mt-2 dark:text-gray-lightest ">
+                              {conversationsWith}
+                            </div>
+                            <div className="mt-2 dark:text-gray-semiDark">
+                              {lastMessage}...
+                            </div>
                           </div>
-                          <div className="mt-2 dark:text-gray-semiDark">
-                            {lastMessage}...
-                          </div>
+                          {/* <div className="flex-shrink-0 ">
+                            <Dropdown>
+                              <DropdownToggle>...</DropdownToggle>
+                              <DropdownMenu>
+                                <DropdownItem>Enoch Ndika</DropdownItem>
+                                <DropdownItem>Josue Kazenga</DropdownItem>
+                                <DropdownItem>Business</DropdownItem>
+                              </DropdownMenu>
+                            </Dropdown>
+                          </div> */}
                         </div>
                       </div>
                     );

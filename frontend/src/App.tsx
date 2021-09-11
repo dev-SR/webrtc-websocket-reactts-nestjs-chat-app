@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import VideoCall from './components/AudioVideoChat/VideoCall';
 
 import AuthProvider from './context/AuthProvider';
 import ChatProvider from './context/ChatProvider';
@@ -22,10 +23,22 @@ function App() {
               component={() => (
                 <SocketProvider>
                   <ChatProvider>
-                    <Home />
+                    <Home />{' '}
                   </ChatProvider>
                 </SocketProvider>
-              )}></PrivateRoute>
+              )}
+            />
+            <PrivateRoute
+              path="/video"
+              exact
+              component={() => (
+                <SocketProvider>
+                  {/* <WebCamProvider> */}
+                  <VideoCall />
+                  {/* </WebCamProvider> */}
+                </SocketProvider>
+              )}
+            />
 
             <Route path="/login" exact component={() => <Login />}></Route>
             <Route path="/register" exact component={() => <Register />}></Route>

@@ -1,6 +1,7 @@
 import React, {
   useEffect, // useEffect
 } from 'react';
+import VideoCall from '../components/AudioVideoChat/VideoCall';
 
 import ChatBox from '../components/Chat/ChatBox';
 import DashboardLayout from '../components/dashboard/layout';
@@ -14,6 +15,7 @@ const Home: React.FC = () => {
   return (
     <DashboardLayout title="Home">
       <ChatBox />
+      {/* <VideoCall /> */}
     </DashboardLayout>
   );
 };
