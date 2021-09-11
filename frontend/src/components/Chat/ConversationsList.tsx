@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useChat } from '../../context/ChatProvider';
-import { FcVideoCall } from 'react-icons/fc';
+import { AiOutlineUserAdd } from 'react-icons/ai';
 import NewWindow from 'react-new-window';
 import { useSocket } from '../../context/SocketProvider';
+import { Modal } from '../modal';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import toast, { Toaster } from 'react-hot-toast';
+import { useAuth } from '../../context/AuthProvider';
 
 interface NewWindowProps {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -19,25 +23,93 @@ const Demo: React.FC<NewWindowProps> = ({ setOpen }) => {
     </NewWindow>
   );
 };
+
+interface ModalProps {
+  isOpen: boolean;
+  toggle: (isOpen?: boolean) => void;
+  setIsOpen?: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+interface Inputs {
+  email: string;
+}
+
+const NewConversationModal: React.FC<ModalProps> = ({ isOpen, toggle, setIsOpen }) => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<Inputs>();
+
+  const { socket } = useSocket();
+  const { user } = useAuth();
+
+  const onSubmit: SubmitHandler<Inputs> = (data) => {
+    socket?.emit('create-new-conversation', { with: data.email, userId: user?.id });
+  };
+
+  useEffect(() => {
+    socket?.on('conversation-exits', (d) => {
+      if (!d.exits) {
+        toast.success('Created');
+        socket?.emit('get-all-conversations', { userID: user?.id, page: 1 });
+
+        setTimeout(() => {
+          if (setIsOpen) setIsOpen(false);
+        }, 700);
+      } else {
+        toast.error('Conversation Already Exits');
+      }
+    });
+
+    return () => {
+      socket?.off('conversation-exits');
+    };
+  }, [socket]);
+  return (
+    <Modal isOpen={isOpen} toggle={toggle} closeOnClickOutside={true}>
+      <div className=" w-1/2">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col space-y-4">
+          <input
+            type="text"
+            {...register('email', { required: true })}
+            placeholder="Enter your friends email"
+            className="py-2 dark:bg-gray-darkest outline-none ring-0 border-0 focus:outline-none focus:ring-0 dark:text-gray-lightest rounded placeholder-gray-light"
+          />
+          {errors.email && <span>This field is required</span>}
+
+          <input
+            type="submit"
+            className="py-2 rounded bg-indigo-500 text-white"
+            value="New Conversation"
+          />
+        </form>
+      </div>
+      <Toaster />
+    </Modal>
+  );
+};
+
 const ConversationsList: React.FC = () => {
   const { conversations, currentUser, selectConversation, selectedConversation } =
     useChat();
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = React.useState(false);
 
-  // console.log(open);
+  const toggle = () => {
+    setIsOpen(!isOpen);
+  };
+
   return (
     <div className="flex flex-col w-full space-y-4">
       <div className="flex justify-between p-4">
         <div className="rounded-full w-12 h-12 bg-gray-darkest flex justify-center items-center text-gray-lighter text-3xl p-2">
           {currentUser?.name.slice(0, 1).toUpperCase()}
         </div>
-
-        <button onClick={() => setOpen(true)}>
-          <FcVideoCall className="w-7 h-7" />
-          {open && <Demo setOpen={setOpen} />}
+        <button onClick={toggle}>
+          <AiOutlineUserAdd className="w-7 h-7 text-gray-semiDark" />
         </button>
+        <NewConversationModal isOpen={isOpen} toggle={toggle} setIsOpen={setIsOpen} />
       </div>
-
       <div className="md:block">
         <input
           type="text"

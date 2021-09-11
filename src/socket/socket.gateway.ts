@@ -12,6 +12,7 @@ import { AuthService } from 'src/auth/auth.service';
 import { UsersService } from 'src/users/users.service';
 import { ChatService } from 'src/chat/chat.service';
 import { ConnectedUserService } from 'src/chat/connected-service.service';
+import { emit } from 'process';
 const options = {
   cors: {
     origin: [
@@ -128,5 +129,14 @@ export class SocketGateway
         this.server.to(tobe_send.socketId).emit('notify-all-on-new-message', d);
       }
     });
+  }
+
+  @SubscribeMessage('create-new-conversation')
+  async createNewConversation(
+    socket: Socket,
+    payload: { with: string; userId },
+  ) {
+    const flag = await this.chatService.createNewConversation(payload);
+    socket.emit('conversation-exits', { exits: flag });
   }
 }

@@ -120,4 +120,87 @@ export class ChatService {
       .orderBy('m.updated_at', 'ASC')
       .getMany();
   }
+
+  async createNewConversation(data: { with: string; userId }): Promise<1 | 0> {
+    const userA = await this.userRepository.findOne({ id: data.userId });
+    const userB = await this.userRepository.findOne({ email: data.with });
+
+    // console.log({ userA, userB });
+
+    const conservationExistBetweenSR = await this.participantsRepository
+      .createQueryBuilder('p')
+      .leftJoinAndSelect('p.conversation', 'c')
+      .where('c.creatorId = :c1 AND p.userId = :p2', {
+        //conversation is created by c1, or participated by p2
+        c1: userA.id,
+        p2: userB.id,
+      })
+      .orWhere('c.creatorId = :c2 AND p.userId = :p1', {
+        c2: userB.id,
+        p1: userA.id,
+      })
+      .getCount();
+
+    if (conservationExistBetweenSR >= 2) {
+      console.log(conservationExistBetweenSR);
+      return 1;
+    }
+
+    const conversationA = this.conversationRepository.create({
+      creator: { id: userA.id },
+    });
+
+    const savedConversationA = await this.conversationRepository.save(
+      conversationA,
+    );
+
+    const participantsForA = await this.participantsRepository.create({
+      user: { id: userB.id }, //B is participating with A
+      conversation: { id: savedConversationA.id },
+    });
+
+    await this.participantsRepository.save(participantsForA);
+
+    const conversationB = this.conversationRepository.create({
+      creator: { id: userB.id },
+    });
+
+    const savedConversationB = await this.conversationRepository.save(
+      conversationB,
+    );
+    const participantsForB = await this.participantsRepository.create({
+      user: { id: userA.id },
+      conversation: { id: savedConversationB.id },
+    });
+
+    await this.participantsRepository.save(participantsForB);
+
+    // const generateMessageForAA = await this.messageRepository.create({
+    //   content: `Start your chat with ${userB.name}`,
+    //   sender: { id: userA.id },
+    //   conversation: { id: savedConversationA.id },
+    // });
+    // await this.messageRepository.save(generateMessageForAA);
+    // const generateMessageForAB = await this.messageRepository.create({
+    //   content: `Start your chat with ${userB.name}`,
+    //   sender: { id: userA.id },
+    //   conversation: { id: savedConversationB.id },
+    // });
+    // await this.messageRepository.save(generateMessageForAB);
+
+    // const generateMessageForBB = await this.messageRepository.create({
+    //   content: `Start your chat with ${userA.name}`,
+    //   sender: { id: userB.id },
+    //   conversation: { id: savedConversationB.id },
+    // });
+    // await this.messageRepository.save(generateMessageForBB);
+    // const generateMessageForBA = await this.messageRepository.create({
+    //   content: `Start your chat with ${userA.name}`,
+    //   sender: { id: userB.id },
+    //   conversation: { id: savedConversationA.id },
+    // });
+    // await this.messageRepository.save(generateMessageForBA);
+
+    return 0;
+  }
 }
