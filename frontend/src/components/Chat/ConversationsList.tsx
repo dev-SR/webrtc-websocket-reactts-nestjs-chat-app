@@ -68,7 +68,7 @@ const NewConversationModal: React.FC<ModalProps> = ({ isOpen, toggle, setIsOpen 
   }, [socket]);
   return (
     <Modal isOpen={isOpen} toggle={toggle} closeOnClickOutside={true}>
-      <div className=" w-1/2">
+      <div className="w-full">
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col space-y-4">
           <input
             type="text"
@@ -122,16 +122,16 @@ const ConversationsList: React.FC = () => {
             {conversations.map((con, i) => (
               <div key={i} className="" onClick={() => selectConversation(i)}>
                 {con.participants &&
-                  con.participants.map((m, j) => {
-                    const avatar = m.user.name.slice(0, 1).toUpperCase();
-                    const conversationsWith = m.user.name;
+                  con.participants.map((p, j) => {
+                    const avatar = p.user.name.slice(0, 1).toUpperCase();
+                    const conversationsWith = p.user.name;
                     let lastMessage = null;
                     if (con.messages && con.messages.length >= 1) {
                       lastMessage = con.messages[0].content.slice(0, 20);
                     }
                     return (
                       <div
-                        key={j}
+                        key={p.id}
                         className={`flex md:items-center space-x-4 md:px-4 md:py dark:hover:bg-gray-darkest cursor-pointer items-center md:justify-start border-l-8 border-gray-dark ${
                           selectedConversation === i
                             ? 'border-l-8 border-gray-darkest dark:bg-gray'
@@ -141,7 +141,7 @@ const ConversationsList: React.FC = () => {
                           className={`flex justify-center items-center rounded-full w-12 h-12 dark:bg-gray-dark dark:text-gray-light relative flex-shrink-0`}>
                           {avatar}
 
-                          {m.user.is_active && (
+                          {p.user.is_active && (
                             <div className="absolute  bottom-0 right-0">
                               <span className="flex h-3 w-3">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>

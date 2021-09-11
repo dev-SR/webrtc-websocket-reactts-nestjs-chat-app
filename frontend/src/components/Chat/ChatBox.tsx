@@ -96,32 +96,32 @@ const ChatBox: React.FC = () => {
         ref={parentDivRef}>
         {currentConversations &&
           currentConversations.messages &&
-          currentConversations.messages.map((v, i) => {
+          currentConversations.messages.map((m, i) => {
             const now = new Date();
             const time_now = moment(now);
-            const time_msg = moment(v.updated_at);
-            const moreThanOneDayOld = time_now.diff(time_msg, 'days');
+            const time_msg = moment(m.updated_at);
+            const moreThanOneDayOld = time_now.diff(time_msg, 'hours');
             let timeFromNow = null;
-            if (moreThanOneDayOld > 0) {
-              timeFromNow = moment(v.updated_at).fromNow(true);
+            if (moreThanOneDayOld > 12) {
+              timeFromNow = moment(m.updated_at).fromNow(true);
             }
 
             return (
-              <div className="w-full" key={i}>
-                {v.sender.id == currentConversations.creator.id ? (
+              <div className="w-full" key={m.id}>
+                {m.sender.id == currentConversations.creator.id ? (
                   <div className="flex items-center justify-end ml-10">
                     <div className="py-2 px-4 rounded min-w-min bg-indigo-500 dark:text-gray-lightest text-white ">
-                      {v.content}
+                      {m.content}
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-center justify-start ml-5 space-x-2">
                     <div className="rounded-full w-10 h-10 dark:bg-gray-dark flex justify-center items-center dark:text-gray-light">
-                      {v.sender.name.slice(0, 1).toUpperCase()}
+                      {m.sender.name.slice(0, 1).toUpperCase()}
                     </div>
 
                     <div className="py-2 px-4 rounded min-w-min dark:bg-gray-dark dark:text-gray-light bg-gray-lighter ">
-                      {v.content}
+                      {m.content}
                     </div>
                   </div>
                 )}

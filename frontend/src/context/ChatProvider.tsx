@@ -21,7 +21,7 @@ interface Participant {
 interface Message {
   content: string;
   created_at: Date;
-  id: Date;
+  id: string;
   sender: UserInfo;
   updated_at: Date;
 }

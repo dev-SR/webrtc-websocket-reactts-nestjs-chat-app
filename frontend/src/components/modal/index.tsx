@@ -90,7 +90,7 @@ ModalProps) {
           <div className="fixed top-0 left-0 z-50 w-screen h-screen bg-black opacity-50" />
           <div className="fixed top-0 left-0 z-50 w-full h-full m-0 overflow-y-auto flex justify-center items-start ">
             <div
-              className="w-1/2 mt-20"
+              className="w-4/5 md:w-1/4 mt-20"
               ref={closeOnClickOutside ? ref : null}
               role="dialogue"
               aria-modal={true}>
