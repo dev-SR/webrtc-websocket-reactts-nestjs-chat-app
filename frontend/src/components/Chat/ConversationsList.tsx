@@ -20,13 +20,14 @@ const Demo: React.FC<NewWindowProps> = ({ setOpen }) => {
   );
 };
 const ConversationsList: React.FC = () => {
-  const { conversations, currentUser, selectConversation } = useChat();
+  const { conversations, currentUser, selectConversation, selectedConversation } =
+    useChat();
   const [open, setOpen] = useState(false);
 
   // console.log(open);
   return (
-    <div className="p-4 flex flex-col w-full space-y-4">
-      <div className="flex justify-between">
+    <div className="flex flex-col w-full space-y-4">
+      <div className="flex justify-between p-4">
         <div className="rounded-full w-12 h-12 bg-gray-darkest flex justify-center items-center text-gray-lighter text-3xl p-2">
           {currentUser?.name.slice(0, 1).toUpperCase()}
         </div>
@@ -45,7 +46,7 @@ const ConversationsList: React.FC = () => {
         />
 
         {conversations && (
-          <div className="mt-10 flex flex-col space-y-4">
+          <div className="mt-10 flex flex-col">
             {conversations.map((con, i) => (
               <div key={i} className="" onClick={() => selectConversation(i)}>
                 {con.participants &&
@@ -59,8 +60,13 @@ const ConversationsList: React.FC = () => {
                     return (
                       <div
                         key={j}
-                        className="flex md:items-center space-x-2 md:p-2 dark:hover:bg-gray-darkest rounded cursor-pointer items-center md:justify-start">
-                        <div className="flex justify-center items-center rounded-full w-12 h-12  dark:bg-gray dark:text-gray-light relative flex-shrink-0 ">
+                        className={`flex md:items-center space-x-4 md:px-4 md:py dark:hover:bg-gray-darkest cursor-pointer items-center md:justify-start border-l-8 border-gray-dark ${
+                          selectedConversation === i
+                            ? 'border-l-8 border-gray-darkest dark:bg-gray'
+                            : ''
+                        }`}>
+                        <div
+                          className={`flex justify-center items-center rounded-full w-12 h-12 dark:bg-gray-dark dark:text-gray-light relative flex-shrink-0`}>
                           {avatar}
 
                           {m.user.is_active && (

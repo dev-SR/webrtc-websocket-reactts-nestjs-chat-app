@@ -5,13 +5,8 @@ import {
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  WsException,
 } from '@nestjs/websockets';
-import {
-  BadGatewayException,
-  Logger,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Logger, UnauthorizedException } from '@nestjs/common';
 import { Socket, Server } from 'socket.io';
 import { AuthService } from 'src/auth/auth.service';
 import { UsersService } from 'src/users/users.service';
@@ -99,9 +94,7 @@ export class SocketGateway
       payload.userID,
       payload.page,
     );
-    // setInterval(() => {
-    //   socket.emit('get-all-conversations', d);
-    // }, 10000);
+    socket.emit('get-all-conversations', d);
   }
 
   @SubscribeMessage('get-all-conversations-immediate')

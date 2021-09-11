@@ -18,6 +18,8 @@ import { RegisterDto } from 'src/users/dto/register.dto';
 import { AuthService } from './auth.service';
 
 import { AuthGuard } from '@nestjs/passport';
+import { SerializeInterceptor } from 'src/utils/interceptors/serialize.interceptor';
+import { RegisterResponseDto } from './dto/register-res.dto';
 
 @Controller()
 /*
@@ -35,6 +37,7 @@ export class AuthController {
 
   private readonly logger = new Logger(AuthController.name);
 
+  @UseInterceptors(new SerializeInterceptor(RegisterResponseDto))
   @Post('register')
   async register(@Body() body: RegisterDto) {
     this.logger.log('register', body);
@@ -55,6 +58,11 @@ export class AuthController {
           HttpStatus.BAD_REQUEST,
         );
       });
+    // return {
+    //   email: body.email,
+    //   password: hashed,
+    //   name: body.name,
+    // };
   }
 
   @Post('login')

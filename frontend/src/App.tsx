@@ -8,6 +8,7 @@ import ThemeProvider from './context/ThemeProvider';
 import PrivateRoute from './helpers/PrivateRoutes';
 import Home from './pages/Home';
 import Login from './pages/Login';
+import Register from './pages/Register';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
               )}></PrivateRoute>
 
             <Route path="/login" exact component={() => <Login />}></Route>
+            <Route path="/register" exact component={() => <Register />}></Route>
           </Switch>
         </AuthProvider>
       </Router>

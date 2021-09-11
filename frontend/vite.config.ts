@@ -6,8 +6,7 @@ export default defineConfig({
   plugins: [reactRefresh()],
   server: {
     proxy: {
-      '/api/users/current': 'http://localhost:5000',
-      '/api/login': 'http://localhost:5000',
+      '/api': 'http://localhost:5000',
     },
   },
   build: {

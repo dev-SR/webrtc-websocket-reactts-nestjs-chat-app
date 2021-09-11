@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 import { CurrentUser } from '../context/AuthProvider';
+import { RegisterResponse } from '../pages/Register';
 
 axios.defaults.withCredentials = true;
 
@@ -15,5 +16,13 @@ export async function loginUser(params: {
   password: string;
 }): Promise<CurrentUser> {
   const response = await axios.post(`/api/login`, params);
+  return response.data;
+}
+export async function registerUser(params: {
+  email: string;
+  password: string;
+  name: string;
+}): Promise<RegisterResponse> {
+  const response = await axios.post(`/api/register`, params);
   return response.data;
 }

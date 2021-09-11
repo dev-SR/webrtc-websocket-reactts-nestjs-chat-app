@@ -40,6 +40,7 @@ interface ChatContextType {
   currentConversations: Conversation | null;
   currentUser: UserInfo | null;
   selectConversation: (convId: number) => void;
+  selectedConversation: number;
 }
 
 const ChatContext = React.createContext<ChatContextType>({} as ChatContextType);
@@ -47,7 +48,6 @@ export function useChat() {
   return useContext(ChatContext);
 }
 const ChatProvider: React.FC = ({ children }) => {
-  const [loadingInitial, setLoadingInitial] = useState<boolean>(true);
   const [conversations, setConversations] = useState<Conversation[] | null>(null);
   const [currentConversations, setCurrentConversations] = useState<Conversation | null>(
     null,
@@ -72,15 +72,18 @@ const ChatProvider: React.FC = ({ children }) => {
       setConversations(d);
     }
     console.log(d);
-    setLoadingInitial(false);
   }, []);
 
   useEffect(() => {
-    socket?.emit('get-all-conversations-immediate', { userID: user?.id, page: 1 });
+    const intervalId = setInterval(() => {
+      socket?.emit('get-all-conversations-immediate', { userID: user?.id, page: 1 });
+    }, 1000 * 10);
+
     socket?.on('get-all-conversations-immediate', handleNewConversation);
 
     return () => {
       socket?.off('get-all-conversations-immediate', handleNewConversation);
+      clearInterval(intervalId);
     };
   }, [socket, location, location.pathname, selectedConversation]);
 
@@ -111,6 +114,7 @@ const ChatProvider: React.FC = ({ children }) => {
         currentConversations,
         currentUser,
         selectConversation,
+        selectedConversation,
       }}>
       {children}
     </ChatContext.Provider>

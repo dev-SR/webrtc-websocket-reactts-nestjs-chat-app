@@ -23,7 +23,7 @@ const DashboardLayout: React.FC<Props> = ({ children, title, description }) => (
     <div className="flex overflow-hidden h-screen w-screen dark:bg-gray relative">
       {/* <div className="flex"> */}
       {/* <SideNavigation /> */}
-      <div className="w-20 md:w-80 h-screen flex-shrink-0 overflow-x-hidden overflow-y-auto shadow dark:bg-gray-dark z-50">
+      <div className="w-20 md:w-80 h-screen flex-shrink-0 overflow-x-hidden overflow-y-auto dark:bg-gray-dark z-50">
         <ConversationListSideBar />
       </div>
       {/* Main+ NAV */}

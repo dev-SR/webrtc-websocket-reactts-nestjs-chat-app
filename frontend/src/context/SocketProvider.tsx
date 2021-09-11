@@ -24,15 +24,12 @@ const SocketProvider: React.FC<ProviderProps> = ({ children }) => {
     null,
   );
 
-  const dev = import.meta.env.VITE_SOCKET_IO_URL;
-  const env = import.meta.env.VITE_NODE_ENV;
-
   //CHANGE io options
   // if (dev) io('http://localhost:5000', { withCredentials: true }); //DIFF. DOMAINS
   // if (prod) io({ withCredentials: true }); //SAME DOMAIN
 
   useEffect(() => {
-    let s: Socket = io({ withCredentials: true });
+    const s: Socket = io('http://localhost:5000', { withCredentials: true });
     setSocket(s);
 
     return () => {

@@ -8,7 +8,6 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const port = +process.env.PORT;
   app.use(cookieParser());
-
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe());
   //https://github.com/expressjs/cors#configuration-options

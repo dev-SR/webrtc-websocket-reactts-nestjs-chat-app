@@ -2,69 +2,54 @@ import React, { useEffect } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useMutation } from 'react-query';
 import { useHistory } from 'react-router';
-import { loginUser } from '../api/user';
+import { registerUser } from '../api/user';
 import toast, { Toaster } from 'react-hot-toast';
 import { useAuth } from '../context/AuthProvider';
-export interface CurrentUser {
-  id: string;
+export interface RegisterResponse {
   email: string;
   name: string;
-  is_active: string;
 }
 
-interface LoginPost {
+interface RegisterPostBody {
   email: string;
   password: string;
+  name: string;
 }
 
-interface Inputs {
-  email: string;
-  password: string;
-}
-const Login = () => {
+const Register = () => {
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<Inputs>();
+  } = useForm<RegisterPostBody>();
 
   const history = useHistory();
 
-  const { setIsLogged, isLogged } = useAuth();
-  const { data, mutate, isSuccess } = useMutation<CurrentUser, Error, LoginPost>(
-    (newTodo) => loginUser(newTodo),
-    {
-      onError: (e) => {
-        toast.error('Error Logging In');
-      },
-    },
-  );
+  const { isLogged } = useAuth();
+  const { mutate, isSuccess, isError, data } = useMutation<
+    RegisterResponse,
+    Error,
+    RegisterPostBody
+  >((newTodo) => registerUser(newTodo));
 
   useEffect(() => {
     if (isLogged) history.push('/');
   }, []);
 
-  useEffect(() => {
-    if (isSuccess) {
-      console.log(data);
-      setIsLogged(true);
+  if (isError) {
+    toast.error('Error');
+  }
 
-      toast.promise(
-        new Promise(function (resolve) {
-          setTimeout(resolve, 2000);
-        }).then(() => {
-          history.push('/');
-        }),
-        {
-          loading: 'Logging in...',
-          success: 'Logged In',
-          error: 'Error Logging In',
-        },
-      );
-    }
-  }, [isSuccess]);
+  if (isSuccess) {
+    setTimeout(() => {
+      toast.success('Success');
+    }, 100);
+    setTimeout(() => {
+      history.push('/login');
+    }, 500);
+  }
 
-  const onSubmit: SubmitHandler<Inputs> = (data) => {
+  const onSubmit: SubmitHandler<RegisterPostBody> = (data) => {
     mutate(data);
   };
   return (
@@ -83,6 +68,14 @@ const Login = () => {
 
         <input
           type="text"
+          {...register('name', { required: true })}
+          placeholder="Enter your name"
+          className="py-2 dark:bg-gray-darkest outline-none ring-0 border-0 focus:outline-none focus:ring-0 dark:focus:bg-black dark:text-gray-lightest rounded placeholder-gray-light"
+        />
+        {errors.name && <span>This field is required</span>}
+
+        <input
+          type="text"
           {...register('password', { required: true })}
           placeholder="Enter your password"
           className="py-2 dark:bg-gray-darkest outline-none ring-0 border-0 focus:outline-none focus:ring-0 dark:focus:bg-black dark:text-gray-lightest rounded placeholder-gray-light"
@@ -92,20 +85,20 @@ const Login = () => {
         <input
           type="submit"
           className="py-2 rounded bg-indigo-500 text-white"
-          value="Login"
+          value="Register"
         />
-      </form>
+      </form>{' '}
       <div className="flex items-center justify-end w-1/2 md:w-1/4 pr-2">
         <button
           className="text-sm text-indigo-500"
           onClick={() => {
-            history.push('/register');
+            history.push('/login');
           }}>
-          Register
+          Login
         </button>
       </div>
     </div>
   );
 };
 
-export default Login;
+export default Register;
