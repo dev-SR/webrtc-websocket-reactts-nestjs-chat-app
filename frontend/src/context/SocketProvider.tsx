@@ -29,7 +29,7 @@ const SocketProvider: React.FC<ProviderProps> = ({ children }) => {
   // if (prod) io({ withCredentials: true }); //SAME DOMAIN
 
   useEffect(() => {
-    const s: Socket = io('http://localhost:5000', { withCredentials: true });
+    const s: Socket = io({ withCredentials: true });
     setSocket(s);
 
     return () => {
