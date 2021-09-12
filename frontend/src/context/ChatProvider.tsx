@@ -121,7 +121,7 @@ const ChatProvider: React.FC = ({ children }) => {
     socket?.on('sdp-process', async (message) => {
       if (message.offer_status) {
         alert('User Offline');
-        window.close();
+        // window.close();
       }
 
       if (message.offer) {
