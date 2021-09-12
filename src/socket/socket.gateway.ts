@@ -142,7 +142,29 @@ export class SocketGateway
 
   @SubscribeMessage('sdp-process')
   async processSDP(socket: Socket, payload: any) {
-    console.log(payload);
-    socket.broadcast.emit('sdp-process', payload);
+    // console.log(JSON.stringify(payload).slice(0, 100));
+
+    if (payload.receiver_id) {
+      const isOnline = await this.connectedUserService.getSocketOfOnlineUser(
+        payload.receiver_id,
+      );
+      if (!isOnline) {
+        socket.emit('sdp-process', { offer_status: 'Not online' });
+      } else {
+        console.log(payload);
+        this.server.to(isOnline.socketId).emit('sdp-process', payload);
+      }
+    }
+
+    // socket.broadcast.emit('sdp-process', payload);
+    //  if (payload.answer) {
+    //    const intervalId = setInterval(function () {
+    //      socket.broadcast.emit('sdp-process', payload);
+    //    }, 2000); // run every 2 seconds
+
+    //    setTimeout(function () {
+    //      clearInterval(intervalId);
+    //    }, 10000); // stop it after 10seconds
+    //  }
   }
 }

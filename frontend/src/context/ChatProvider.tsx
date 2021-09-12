@@ -41,6 +41,13 @@ interface ChatContextType {
   currentUser: UserInfo | null;
   selectConversation: (convId: number) => void;
   selectedConversation: number;
+  offerSDP: OfferSDPDetails | null;
+  setOfferSDP: React.Dispatch<React.SetStateAction<OfferSDPDetails | null>>;
+}
+interface OfferSDPDetails {
+  offer: RTCSessionDescription;
+  sender_id: string;
+  receiver_id: string;
 }
 
 const ChatContext = React.createContext<ChatContextType>({} as ChatContextType);
@@ -107,6 +114,27 @@ const ChatProvider: React.FC = ({ children }) => {
     if (user) setCurrentUser(user);
   }, [user]);
 
+  // ANSWERing VIDEO CALL
+  const [offerSDP, setOfferSDP] = useState<OfferSDPDetails | null>(null);
+
+  useEffect(() => {
+    socket?.on('sdp-process', async (message) => {
+      if (message.offer_status) {
+        alert('User Offline');
+        window.close();
+      }
+
+      if (message.offer) {
+        // alert('Received Offer, Creating Answer');
+        setOfferSDP(message); //interface OfferSDPDetails
+      }
+    });
+
+    return () => {
+      socket?.off('sdp-process');
+    };
+  }, [socket]);
+
   return (
     <ChatContext.Provider
       value={{
@@ -115,6 +143,8 @@ const ChatProvider: React.FC = ({ children }) => {
         currentUser,
         selectConversation,
         selectedConversation,
+        offerSDP,
+        setOfferSDP,
       }}>
       {children}
     </ChatContext.Provider>

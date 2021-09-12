@@ -4,29 +4,53 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { FiVideoOff, FiVideo, FiMic, FiMicOff } from 'react-icons/fi';
 import { MdScreenShare, MdStopScreenShare } from 'react-icons/md';
+import { useAuth } from '../../context/AuthProvider';
+import { useChat } from '../../context/ChatProvider';
 import { useSocket } from '../../context/SocketProvider';
 export default function Home() {
   const { socket } = useSocket();
-  const localVideoTracks = useRef<MediaStreamTrack | null>();
+  const { user } = useAuth();
+  const { currentConversations, offerSDP, setOfferSDP } = useChat();
+
+  const [localStreams, setLocalStreams] = useState<MediaStream | null>(null);
+  const [remoteStreams, setRemoteStreams] = useState<MediaStream | null>(null);
+
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const peerRef = useRef<RTCPeerConnection>();
-
-  const localAudioTracks = useRef<MediaStreamTrack | null>();
-  const localAudioRef = useRef<HTMLAudioElement>(null);
-  const remoteAudioRef = useRef<HTMLAudioElement>(null);
-
   /* The RTCRtpSender interface provides the ability to control and obtain details about how a particular MediaStreamTrack is encoded and sent to a remote peer */
   const [RTCRtpSenderLists, setRTCRtpSenderLists] = useState<RTCRtpSender[]>([]);
-  const [stopped, setStopped] = useState(false);
-  const remoteStreams = useRef<MediaStream[] | null>();
 
-  const [localVideoStreams, setLocalVideoStreams] = useState<MediaStream>();
-  const [localAudioStreams, setLocalAudioStreams] = useState<MediaStream>();
   // 1. CALLER
   const callUser = async () => {
-    await initStreamsAndRTConn();
+    if (!localStreams) {
+      await initStreamsAndRTConn();
+    }
+    if (localStreams) {
+      if (currentConversations && currentConversations.participants) {
+        const id = currentConversations.participants[0].user.id;
+        socket?.emit('sdp-process', { receiver_id: id });
+      }
+    }
   };
+
+  useEffect(() => {
+    if (!offerSDP) callUser();
+    return () => {
+      localStreams?.getTracks().forEach((t) => t.stop());
+      remoteStreams?.getTracks().forEach((t) => t.stop());
+      setOfferSDP(null);
+    };
+  }, [localStreams]);
+
+  useEffect(() => {
+    if (offerSDP) answerCall();
+    return () => {
+      localStreams?.getTracks().forEach((t) => t.stop());
+      remoteStreams?.getTracks().forEach((t) => t.stop());
+      setOfferSDP(null);
+    };
+  }, [offerSDP]);
 
   const initStreamsAndRTConn = async () => {
     // 1.0 prepare local stream
@@ -34,51 +58,50 @@ export default function Home() {
       video: true,
       audio: false,
     });
-    const audioStreams = await navigator.mediaDevices.getUserMedia({
-      video: false,
-      audio: true,
-    });
-
-    localVideoTracks.current = streams.getVideoTracks()[0];
-    localAudioTracks.current = audioStreams.getAudioTracks()[0];
 
     const video = localVideoRef.current;
-    video!.srcObject = new MediaStream([localVideoTracks.current]);
-    video!.onloadedmetadata = () => {
-      video?.play();
-    };
+    const promise = video?.play();
+    // console.log(promise);
+    /*
+    DOMException: play() failed because the user didn't interact with the document first.
 
-    const audio = localAudioRef.current;
-    audio!.srcObject = new MediaStream([localAudioTracks.current]);
-    audio!.onloadedmetadata = () => {
-      audio?.play();
-    };
+    https://flutterq.com/uncaught-in-promise-domexception-play-failed-because-the-user-didnt-interact-with-the-document-first/
+
+    */
+    if (promise !== undefined) {
+      promise
+        .then(() => {
+          // Autoplay started
+          // video!.onloadedmetadata = () => {
+          //   video?.play();
+          // };
+          // video!.play();
+        })
+        .catch((error) => {
+          // Autoplay was prevented.
+          console.log(error);
+          video!.srcObject = streams;
+          video!.muted = true;
+          video!.play();
+        });
+    }
 
     // 1. init peer
-    if (localVideoTracks.current) peerRef.current = createPeer();
+    peerRef.current = createPeer();
 
     // 1. add local tracks and streams to WebRTC
-    if (localVideoTracks.current) {
-      const videoRTCRtpSender = peerRef.current?.addTrack(
-        localVideoTracks.current as MediaStreamTrack,
-        streams,
-      );
-      if (videoRTCRtpSender) {
-        const newSender = [...RTCRtpSenderLists, videoRTCRtpSender];
-        setRTCRtpSenderLists(newSender);
-      }
+
+    if (localVideoRef.current) {
+      streams.getTracks().forEach((track) => {
+        const videoRTCRtpSender = peerRef.current?.addTrack(track, streams);
+        if (videoRTCRtpSender) {
+          const newSender = [...RTCRtpSenderLists, videoRTCRtpSender];
+          setRTCRtpSenderLists(newSender);
+        }
+      });
     }
 
-    if (localAudioTracks.current) {
-      const audioRTCRtpSender = peerRef.current?.addTrack(
-        localAudioTracks.current as MediaStreamTrack,
-        audioStreams,
-      );
-      if (audioRTCRtpSender) {
-        const newSender = [...RTCRtpSenderLists, audioRTCRtpSender];
-        setRTCRtpSenderLists(newSender);
-      }
-    }
+    setLocalStreams(streams);
   };
   const createPeer = () => {
     // console.log('Creating Peer Connection');
@@ -98,42 +121,72 @@ export default function Home() {
       const myOffer = await peerRef.current?.createOffer();
       await peerRef.current?.setLocalDescription(myOffer);
       // 2.CALLER: send offer
-      socket?.emit('sdp-process', { offer: peerRef.current?.localDescription });
+      if (currentConversations && currentConversations.participants) {
+        const id = currentConversations.participants[0].user.id;
+        // socket?.emit('sdp-process', { receiver_id: id });
+        socket?.emit('sdp-process', {
+          offer: peerRef.current?.localDescription,
+          receiver_id: id,
+          sender_id: user?.id,
+        });
+      }
     } catch (err) {}
   };
   const handleIceCandidateEvent = (e: RTCPeerConnectionIceEvent) => {
     // console.log('Found Ice Candidate');
     if (e.candidate) {
-      socket?.emit('sdp-process', { iceCandidate: e.candidate });
+      if (currentConversations && currentConversations.participants) {
+        const id = currentConversations.participants[0].user.id;
+        socket?.emit('sdp-process', {
+          iceCandidate: e.candidate,
+          receiver_id: id,
+        });
+      }
     }
   };
   const handleRemoteTrackEvent = (e: RTCTrackEvent) => {
     console.log('Received Tracks');
-    remoteStreams.current?.push(e.streams[0]);
-    if (e.track.kind == 'video') {
-      const video = remoteVideoRef.current;
-      video!.srcObject = null;
-      video!.srcObject = e.streams[0];
-      video!.onloadedmetadata = () => {
-        video?.play();
-      };
+    setRemoteStreams(e.streams[0]);
+    const video = remoteVideoRef.current;
+    const promise = video?.play();
+    console.log(promise);
+    video!.srcObject = null;
+    if (promise !== undefined) {
+      promise
+        .then(() => {
+          // Autoplay started
+          // video!.onloadedmetadata = () => {
+          //   video?.play();
+          // };
+          // video!.play();
+        })
+        .catch((error) => {
+          // Autoplay was prevented.
+          console.log(error);
+          video!.srcObject = e.streams[0];
+          video!.muted = true;
+          video!.play();
+        });
     }
-    if (e.track.kind == 'audio') {
-      const audio = remoteAudioRef.current;
-      audio!.srcObject = null;
-      audio!.srcObject = e.streams[0];
-      audio!.onloadedmetadata = () => {
-        audio?.play();
-      };
-    }
+
+    // video!.srcObject = e.streams[0];
+    // video!.onloadedmetadata = () => {
+    //   video?.play();
+    // };
   };
-  const [offerSDP, setOfferSDP] = useState<RTCSessionDescription | null>(null);
+  // const [offerSDP, setOfferSDP] = useState<RTCSessionDescription | null>(null);
   useEffect(() => {
     socket?.on('sdp-process', async (message) => {
-      if (message.offer) {
-        console.log('Received Offer, Creating Answer');
-        setOfferSDP(message.offer);
+      if (message.offer_status) {
+        alert('User Offline');
+        window.close();
       }
+
+      // if (message.offer) {
+      //   console.log('Received Offer, Creating Answer');
+
+      //   setOfferSDP(message.offer);
+      // }
       if (message.answer) {
         // console.log('Receiving Answer');
 
@@ -143,7 +196,7 @@ export default function Home() {
           );
       }
       if (message.iceCandidate) {
-        // console.log('Receiving and Adding ICE Candidate');
+        console.log('Receiving and Adding ICE Candidate');
         try {
           if (peerRef.current?.localDescription)
             await peerRef.current?.addIceCandidate(
@@ -164,7 +217,9 @@ export default function Home() {
     await initStreamsAndRTConn();
     // 3.3 CALLEE: set caller offer as remote sdp
     if (offerSDP) {
-      await peerRef.current?.setRemoteDescription(new RTCSessionDescription(offerSDP));
+      await peerRef.current?.setRemoteDescription(
+        new RTCSessionDescription(offerSDP.offer),
+      );
     } else {
       return;
     }
@@ -174,21 +229,27 @@ export default function Home() {
     await peerRef.current?.setLocalDescription(answer);
 
     // 3.5 CALLEE: send answer sdp
-    socket?.emit('sdp-process', { answer: peerRef.current?.localDescription });
+    if (currentConversations && currentConversations.participants) {
+      socket?.emit('sdp-process', {
+        answer: peerRef.current?.localDescription,
+        receiver_id: offerSDP.sender_id,
+        sender_id: user?.id,
+      });
+    }
   };
 
   const stopVid = async () => {
-    if (localVideoTracks.current) {
-      RTCRtpSenderLists.forEach(async (sender) => {
-        if (sender.track?.kind == 'video') {
-          peerRef.current?.removeTrack(sender);
-          /* The RTCPeerConnection.removeTrack() method tells the local end of the connection to stop sending media from the specified track, without actually removing the corresponding RTCRtpSender from the list of senders as reported by RTCPeerConnection.getSenders() */
-        }
-      });
-      localVideoTracks.current?.stop();
-      localVideoTracks.current = null;
-      localVideoRef.current!.srcObject = null;
-    }
+    // if (localVideoTracks.current) {
+    //   RTCRtpSenderLists.forEach(async (sender) => {
+    //     if (sender.track?.kind == 'video') {
+    //       peerRef.current?.removeTrack(sender);
+    //       /* The RTCPeerConnection.removeTrack() method tells the local end of the connection to stop sending media from the specified track, without actually removing the corresponding RTCRtpSender from the list of senders as reported by RTCPeerConnection.getSenders() */
+    //     }
+    //   });
+    //   localVideoTracks.current?.stop();
+    //   localVideoTracks.current = null;
+    //   localVideoRef.current!.srcObject = null;
+    // }
   };
   const switchForScreenSharingStream = async () => {
     try {
@@ -217,9 +278,9 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-gray items-center justify-center">
       <main className="flex flex-col space-y-4">
         <div className="flex space-x-4">
-          <button onClick={callUser} className="bg-yellow-400 rounded p-2 ">
+          {/* <button onClick={callUser} className="bg-yellow-400 rounded p-2 ">
             Call
-          </button>
+          </button> */}
           <button
             onClick={() => {
               answerCall();
@@ -240,8 +301,8 @@ export default function Home() {
           <video ref={localVideoRef} className="bg-black w-60 h-60" />
           <video ref={remoteVideoRef} className=" bg-gray-900  w-60 h-60" />
         </div>
-        <audio ref={localAudioRef} controls className=" bg-gray-100  w-60 h-10" muted />
-        <audio ref={remoteAudioRef} controls className=" bg-gray-100  w-60 h-10" muted />
+        {/* <audio ref={localAudioRef} controls className=" bg-gray-100  w-60 h-10" muted />
+        <audio ref={remoteAudioRef} controls className=" bg-gray-100  w-60 h-10" muted /> */}
       </main>
     </div>
   );

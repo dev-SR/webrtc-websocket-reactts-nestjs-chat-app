@@ -1,20 +1,29 @@
 import { MoonIcon, SunIcon } from '@heroicons/react/solid';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useChat } from '../../../context/ChatProvider';
 import { BsCameraVideoFill } from 'react-icons/bs';
 
 import { useTheme } from '../../../context/ThemeProvider';
 import NewChatWindow from '../../AudioVideoChat';
-
+import VideoCall from '../../AudioVideoChat/VideoCall';
+import NewWindow from 'react-new-window';
 export default function TopNavigation() {
   const { dark, setDark } = useTheme();
-  const { currentConversations } = useChat();
+  const { currentConversations, offerSDP } = useChat();
 
   const [isOpen, setIsOpen] = useState(false);
 
+  useEffect(() => {
+    if (offerSDP) {
+      const shouldOpen = confirm(`Answer Call From ${JSON.stringify(offerSDP)}`);
+
+      if (shouldOpen) setIsOpen(true);
+    }
+  }, [offerSDP]);
+
   return (
     <header className="h-16 md:h-16 flex-shrink-0 shadow bg-white dark:bg-gray items-center relative ">
-      {isOpen && <NewChatWindow setOpen={setIsOpen} />}
+      {isOpen && <NewChatWindow setOpen={setIsOpen}></NewChatWindow>}
       <div className="flex flex-center flex-col h-full justify-center mx-auto relative px-3 text-white z-10">
         <div className="flex items-center pl-1 relative w-full sm:ml-0 sm:pr-2 lg:max-w-68">
           <div className="flex items-center justify-between ml-5 mr-0 p-1 relative text-gray-700 w-full sm:mr-0 sm:right-auto">

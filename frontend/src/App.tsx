@@ -17,31 +17,14 @@ function App() {
       <Router>
         <AuthProvider>
           <Switch>
-            <PrivateRoute
-              path="/"
-              exact
-              component={() => (
-                <SocketProvider>
-                  <ChatProvider>
-                    <Home />{' '}
-                  </ChatProvider>
-                </SocketProvider>
-              )}
-            />
-            <PrivateRoute
-              path="/video"
-              exact
-              component={() => (
-                <SocketProvider>
-                  {/* <WebCamProvider> */}
-                  <VideoCall />
-                  {/* </WebCamProvider> */}
-                </SocketProvider>
-              )}
-            />
-
             <Route path="/login" exact component={() => <Login />}></Route>
             <Route path="/register" exact component={() => <Register />}></Route>
+            <SocketProvider>
+              <ChatProvider>
+                <PrivateRoute path="/" exact component={() => <Home />} />
+                <PrivateRoute path="/video" exact component={() => <VideoCall />} />
+              </ChatProvider>
+            </SocketProvider>
           </Switch>
         </AuthProvider>
       </Router>
